@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload and Prompt</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+        label {
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input[type="file"], textarea {
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[type="submit"] {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        .chat-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .chat-bubble {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 15px;
+            position: relative;
+            max-width: 80%;
+            display: inline-block;
+        }
+        .user {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .user::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: -10px;
+            border-width: 10px;
+            border-style: solid;
+            border-color: transparent transparent transparent #007bff;
+        }
+        .ai {
+            background-color: #f1f1f1;
+            color: #333;
+            align-self: flex-start;
+            margin-right: auto;
+        }
+        .ai::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: -10px;
+            border-width: 10px;
+            border-style: solid;
+            border-color: transparent #f1f1f1 transparent transparent;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const form = document.querySelector("form");
+            const chatContainer = document.getElementById("chat-container");
+
+            form.addEventListener("submit", function(event) {
+                event.preventDefault();
+                const formData = new FormData(form);
+
+                // Create user chat bubble
+                const userBubble = document.createElement("div");
+                userBubble.className = "chat-bubble user";
+                userBubble.textContent = formData.get("prompt");
+                chatContainer.appendChild(userBubble);
+
+                fetch("/process", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Create AI chat bubble
+                    const aiBubble = document.createElement("div");
+                    aiBubble.className = "chat-bubble ai";
+                    aiBubble.textContent = data.response;
+                    chatContainer.appendChild(aiBubble);
+
+                    // Scroll to the bottom of the chat container
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                    // Reset the prompt textarea
+                    form.querySelector("textarea").value = "";
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload a File and Provide a Prompt</h1>
+        <form action="/process" method="post" enctype="multipart/form-data">
+            <label for="file">Select a file:</label>
+            <input type="file" id="file" name="file" accept=".txt">
+            <label for="prompt">Enter a prompt:</label>
+            <textarea id="prompt" name="prompt" placeholder="Enter your prompt here..."></textarea>
+            <input type="submit" value="Upload and Process">
+        </form>
+        <div id="chat-container" class="chat-container"></div>
+    </div>
+</body>
+</html>
